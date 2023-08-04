@@ -16,9 +16,9 @@ from unreliable import UnreliableChannel
 #                                                                                                                      #
 # #################################################################################################################### #
 
-data_to_send = "The quick brown fox jumped over the lazy dog"
+dataToSend = "The quick brown fox jumped over the lazy dog"
 
-# data_to_send = "\r\n\r\n...We choose to go to the moon. We choose to go to the moon in this "\
+# dataToSend = "\r\n\r\n...We choose to go to the moon. We choose to go to the moon in this "\
 # "decade and do the other things, not because they are easy, but because they are hard, "\
 # "because that goal will serve to organize and measure the best of our energies and skills, "\
 # "because that challenge is one that we are willing to accept, one we are unwilling to "\
@@ -43,59 +43,60 @@ server = RDTLayer()
 
 # Start with a reliable channel (all flags false)
 # As you create your rdt algorithm for send and receive, turn these on.
-out_of_order = False
-drop_packets = False
-delay_packets = False
-data_errors = False
+outOfOrder = False
+dropPackets = False
+delayPackets = False
+dataErrors = False
 
 # Create unreliable communication channels
-client_to_server_channel = UnreliableChannel(out_of_order, drop_packets, delay_packets, data_errors)
-server_to_client_channel = UnreliableChannel(out_of_order, drop_packets, delay_packets, data_errors)
+clientToServerChannel = UnreliableChannel(outOfOrder,dropPackets,delayPackets,dataErrors)
+serverToClientChannel = UnreliableChannel(outOfOrder,dropPackets,delayPackets,dataErrors)
 
 # Creat client and server that connect to unreliable channels
-client.setSendChannel(client_to_server_channel)
-client.setReceiveChannel(server_to_client_channel)
-server.setSendChannel(server_to_client_channel)
-server.setReceiveChannel(client_to_server_channel)
+client.setSendChannel(clientToServerChannel)
+client.setReceiveChannel(serverToClientChannel)
+server.setSendChannel(serverToClientChannel)
+server.setReceiveChannel(clientToServerChannel)
 
 # Set initial data that will be sent from client to server
-client.setDataToSend(data_to_send)
+client.setDataToSend(dataToSend)
 
-loop_iter = 0            # Used to track communication timing in iterations
+loopIter = 0            # Used to track communication timing in iterations
 while True:
     print("-----------------------------------------------------------------------------------------------------------")
-    loop_iter += 1
-    print("Time (iterations) = {0}".format(loop_iter))
+    loopIter += 1
+    print("Time (iterations) = {0}".format(loopIter))
 
     # Sequence to pass segments back and forth between client and server
     print("Client------------------------------------------")
     client.processData()
-    client_to_server_channel.processData()
+    clientToServerChannel.processData()
     print("Server------------------------------------------")
     server.processData()
-    server_to_client_channel.processData()
+    serverToClientChannel.processData()
+
 
     # show the data received so far
     print("Main--------------------------------------------")
-    data_received_from_client = server.getDataReceived()
-    print("DataReceivedFromClient: {0}".format(data_received_from_client))
+    dataReceivedFromClient = server.getDataReceived()
+    print("DataReceivedFromClient: {0}".format(dataReceivedFromClient))
 
-    if data_received_from_client == data_to_send:
+    if dataReceivedFromClient == dataToSend:
         print('$$$$$$$$ ALL DATA RECEIVED $$$$$$$$')
         break
 
-    # time.sleep(0.1)
+    #time.sleep(0.1)
     input("Press enter to continue...")
 
-print("countTotalDataPackets: {0}".format(client_to_server_channel.count_total_data_packets))
-print("countSentPackets: {0}".format(client_to_server_channel.count_sent_packets + server_to_client_channel.count_sent_packets))
-print("countChecksumErrorPackets: {0}".format(client_to_server_channel.count_checksum_error_packets))
-print("countOutOfOrderPackets: {0}".format(client_to_server_channel.count_out_of_order_packets))
-print("countDelayedPackets: {0}".format(client_to_server_channel.count_delayed_packets + server_to_client_channel.count_delayed_packets))
-print("countDroppedDataPackets: {0}".format(client_to_server_channel.count_dropped_packets))
-print("countAckPackets: {0}".format(server_to_client_channel.count_ack_packets))
-print("countDroppedAckPackets: {0}".format(server_to_client_channel.count_dropped_packets))
+print("countTotalDataPackets: {0}".format(clientToServerChannel.countTotalDataPackets))
+print("countSentPackets: {0}".format(clientToServerChannel.countSentPackets + serverToClientChannel.countSentPackets))
+print("countChecksumErrorPackets: {0}".format(clientToServerChannel.countChecksumErrorPackets))
+print("countOutOfOrderPackets: {0}".format(clientToServerChannel.countOutOfOrderPackets))
+print("countDelayedPackets: {0}".format(clientToServerChannel.countDelayedPackets + serverToClientChannel.countDelayedPackets))
+print("countDroppedDataPackets: {0}".format(clientToServerChannel.countDroppedPackets))
+print("countAckPackets: {0}".format(serverToClientChannel.countAckPackets))
+print("countDroppedAckPackets: {0}".format(serverToClientChannel.countDroppedPackets))
 
 print("# segment timeouts: {0}".format(client.countSegmentTimeouts))
 
-print("TOTAL ITERATIONS: {0}".format(loop_iter))
+print("TOTAL ITERATIONS: {0}".format(loopIter))

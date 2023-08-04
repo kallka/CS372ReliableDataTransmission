@@ -23,50 +23,50 @@ class Segment():
         self.acknum = -1
         self.payload = ''
         self.checksum = 0
-        self.start_iteration = 0
-        self.start_delay_iteration = 0
+        self.startIteration = 0
+        self.startDelayIteration = 0
 
     def setData(self,seq,data):
         self.seqnum = seq
         self.acknum = -1
         self.payload = data
         self.checksum = 0
-        str = self.toString()
-        self.checksum = self.calcChecksum(str)
+        str = self.to_string()
+        self.checksum = self.calc_checksum(str)
 
     def setAck(self,ack):
         self.seqnum = -1
         self.acknum = ack
         self.payload = ''
         self.checksum = 0
-        str = self.toString()
-        self.checksum = self.calcChecksum(str)
+        str = self.to_string()
+        self.checksum = self.calc_checksum(str)
 
     def setStartIteration(self,iteration):
-        self.start_iteration = iteration
+        self.startIteration = iteration
 
     def getStartIteration(self):
-        return self.start_iteration
+        return self.startIteration
 
     def setStartDelayIteration(self,iteration):
-        self.start_delay_iteration = iteration
+        self.startDelayIteration = iteration
 
     def getStartDelayIteration(self):
-        return self.start_delay_iteration
+        return self.startDelayIteration
 
-    def toString(self):
+    def to_string(self):
         return "seq: {0}, ack: {1}, data: {2}"\
-        .format(self.seqnum, self.acknum, self.payload)         # TODO: check this ".format"
+        .format(self.seqnum,self.acknum,self.payload)
 
     def checkChecksum(self):
-        cs = self.calcChecksum(self.toString())
+        cs = self.calc_checksum(self.to_string())
         return cs == self.checksum
 
-    def calcChecksum(self, str):
-        return reduce(lambda x, y: x+y, map(ord, str))
+    def calc_checksum(self,str):
+        return reduce(lambda x,y:x+y, map(ord, str))
 
     def printToConsole(self):
-        print(self.toString())
+        print(self.to_string())
 
     # Function to cause an error - Do not modify
     def createChecksumError(self):
