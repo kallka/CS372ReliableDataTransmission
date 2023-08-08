@@ -52,7 +52,7 @@ dataErrors = False
 clientToServerChannel = UnreliableChannel(outOfOrder,dropPackets,delayPackets,dataErrors)
 serverToClientChannel = UnreliableChannel(outOfOrder,dropPackets,delayPackets,dataErrors)
 
-# Creat client and server that connect to unreliable channels
+# Create client and server that connect to unreliable channels
 client.setSendChannel(clientToServerChannel)
 client.setReceiveChannel(serverToClientChannel)
 server.setSendChannel(serverToClientChannel)
@@ -69,10 +69,10 @@ while True:
 
     # Sequence to pass segments back and forth between client and server
     print("Client------------------------------------------")
-    client.processData()
+    client.processData()                                        # all changes here b/c client.setSendChannel(clientToServerChannel)
     clientToServerChannel.processData()
     print("Server------------------------------------------")
-    server.processData()
+    server.processData()                                        # all changes here
     serverToClientChannel.processData()
 
 
@@ -87,6 +87,7 @@ while True:
 
     #time.sleep(0.1)
     input("Press enter to continue...")
+    # TODO: Question 1 - Is this supposed to be modified to accept new data and read "enter"?
 
 print("countTotalDataPackets: {0}".format(clientToServerChannel.countTotalDataPackets))
 print("countSentPackets: {0}".format(clientToServerChannel.countSentPackets + serverToClientChannel.countSentPackets))
