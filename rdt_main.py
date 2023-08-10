@@ -1,3 +1,10 @@
+# Name: Karina Kallas
+# Course: OSU CS 372
+# Due Date: 8/15/23
+# Citations:    1.) OSU Course Materials
+#               2.) https://www.geeksforgeeks.org/python-divide-string-into-equal-k-chunks/
+
+
 from rdt_layer import *
 from unreliable import UnreliableChannel
 
@@ -43,10 +50,10 @@ server = RDTLayer()
 
 # Start with a reliable channel (all flags false)
 # As you create your rdt algorithm for send and receive, turn these on.
-outOfOrder = False
+outOfOrder = True
 dropPackets = False
 delayPackets = False
-dataErrors = False
+dataErrors = True
 
 # Create unreliable communication channels
 clientToServerChannel = UnreliableChannel(outOfOrder,dropPackets,delayPackets,dataErrors)
@@ -69,11 +76,15 @@ while True:
 
     # Sequence to pass segments back and forth between client and server
     print("Client------------------------------------------")
-    client.processData()                                        # all changes here b/c client.setSendChannel(clientToServerChannel)
+    client.processData()
     clientToServerChannel.processData()
     print("Server------------------------------------------")
-    server.processData()                                        # all changes here
+    server.processData()
     serverToClientChannel.processData()
+    print(f"\t TOTAL OUT OF ORDER: {server.outOfOrderPackets}")
+    print(f"\t TOTAL CHECKSUM: {server.countChecksumErrorPackets}")
+    clientToServerChannel.countOutOfOrderPackets = server.outOfOrderPackets
+    clientToServerChannel.countChecksumErrorPackets = server.countChecksumErrorPackets
 
 
     # show the data received so far
