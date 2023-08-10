@@ -31,13 +31,6 @@ class RDTLayer(object):
     receiveChannel = None
     dataToSend = ''
     currentIteration = 0                                # Use this for segment 'timeouts'
-    # TODO: Add items as needed
-
-    # current window size?
-    # current sequence num?
-    # incoming ack num?
-    # do we need to wait for no ack for x amount of time?
-    # do we need to store data from server and/or client?
 
     # ################################################################################################################ #
     # __init__()                                                                                                       #
@@ -53,19 +46,19 @@ class RDTLayer(object):
         self.dataToSend = ''
         self.currentIteration = 0
         self.countSegmentTimeouts = 0
-        # TODO: New Items
-        self.dataTotalLength = 0
+
+        # Added items for window, seq, ack and data received
+        self.windowStart = 0
+        self.windowStop = 0
         self.currentSeqNum = 0
         self.currentAckNum = 0
         self.dataReceived = ''
-        # TODO: Add items as needed
+
+        # Added items for wait and counting outOfOrder, checksumError, droppedPackets
+        self.wait = 0
         self.outOfOrderPackets = 0
         self.countChecksumErrorPackets = 0
-        # set a segment timeout?
-        # set an Ack?
-        # set a start size for window?
-        # set a top size for window?
-        # wait time?
+        self.countDroppedAckPackets = 0
 
 
     # ################################################################################################################ #
@@ -113,7 +106,7 @@ class RDTLayer(object):
         # ############################################################################################################ #
         # Identify the data that has been received...
 
-        print('getDataReceived(): Complete this...')
+        #print('getDataReceived(): Complete this...')
 
         # ############################################################################################################ #
         return self.dataReceived
@@ -127,40 +120,35 @@ class RDTLayer(object):
     #                                                                                                                  #
     # ################################################################################################################ #
     def helpReadData(self, listToProcess):
-        expectedAck = self.currentAckNum
+        expectedAck = self.currentAckNum            # create variable for the expected ACK number
         readableList = []
 
-        # READ DATA and BASIC CHECKS
-        #       1. Count out of order packets
-        #       2. Checksum
+        # READ DATA and BASIC CHECKS - out of order and checksum
         for index in range(0, len(listToProcess)):
-            # if expectedAck does not match the index
             if listToProcess[index].payload != '':
+                # is it out of order?
                 if expectedAck != listToProcess[index].seqnum:
                     self.outOfOrderPackets += 1
-                # if there is data and it matches a checksum
+                # is the checksum True?
                 if listToProcess[index].checkChecksum() is True:
                     readableList.append([listToProcess[index].seqnum, listToProcess[index].payload])
                 else:
                     self.countChecksumErrorPackets += 1
-                    print("\t\t\t TALLY OUT OF ORDER: ", self.countChecksumErrorPackets)
-            expectedAck += 1
-        # RETURN IF EMPTY
+            # increment an expectedAck local variable
+            expectedAck += 4
+
+        # RETURN IF EMPTY - no valid packets sent
         if len(readableList) == 0:
             return []
 
         # SORT PACKETS and STORE FIRST SEQNUM
         readableList.sort()
-        firstSeqNum = readableList[0][0]
 
-        # CHECKS FOR SEQNUM AND ACKNUM
-        #   1. Does firstSeqNum match expected ack:
-        if firstSeqNum != self.currentAckNum:
-            return []
-        #   2. Were any seqnum dropped and do we need a selective retransmit at that point?
+        # # CHECKS FOR SEQNUM AND ACKNUM
+        # #   Does seq match ack? If not go-back-n immediately
         for num in range(0, len(readableList)):
-            if readableList[num][0] - num != firstSeqNum:
-                readableList = readableList[:num]              # remove remaining from list
+            if readableList[num][0] - num != self.currentAckNum:
+                readableList = readableList[:num]              # remove 'n' remaining from list
                 break
 
         # RETURN : only sends back usable elements
@@ -176,11 +164,10 @@ class RDTLayer(object):
     # ################################################################################################################ #
     def processData(self):
         # print(f"\tLine 130: Data in rdt_layer.processData: {self.dataToSend}")
-        # self.dataTotalLength = len(self.dataToSend)
-        # print(f"\tLine 134: Length in rdt_layer.processData: {self.dataTotalLength}")
+        # print(f"\tLine 134: Length in rdt_layer.processData: {len(self.dataToSend)}")
         # print(f"\tLine 135: Data in rdt_layer.processData: {self.getDataReceived}")
-        print(f"\tCurrentAckNum: {self.currentAckNum}")
-        print(f"\tCurrentSeqNum: {self.currentSeqNum}")
+        #print(f"\tCurrentAckNum: {self.currentAckNum}")
+        #print(f"\tCurrentSeqNum: {self.currentSeqNum}")
         self.currentIteration += 1
         self.processSend()
         self.processReceiveAndSendRespond()
@@ -190,46 +177,60 @@ class RDTLayer(object):
     # processSend()                                                                                                    #
     #                                                                                                                  #
     # Description:                                                                                                     #
-    # Manages Segment sending tasks for CLIENT                                                                         #
+    # Confirms ACK, looks for timeouts, processes data to send.                                                        #
     #                                                                                                                  #
     #                                                                                                                  #
     # ################################################################################################################ #
     def processSend(self):
-        # ############################################################################################################ #
-        print('processSend(): Complete this...')
-
-        # TODO: Confirm ACK NUM
         receivedAck = self.receiveChannel.receiveQueue
-        if len(receivedAck) == 1:
-            if self.currentSeqNum+1 >= receivedAck[0].acknum:
+
+        # CHECK WAIT TIME
+        if self.currentIteration > 1 and len(receivedAck) == 0:
+            if self.wait == 3:
+                self.currentSeqNum = self.windowStart * 4
+                self.countSegmentTimeouts += 1
+            else:
+                self.wait += 1
+                return
+
+        # CHECK ACK NUMS
+        if len(self.dataToSend) > 0 and len(receivedAck) == 1:
+            # expected data in ack
+            if self.currentSeqNum + 4 == receivedAck[0].acknum:
                 self.currentSeqNum = receivedAck[0].acknum
-            print(f"\tLENGTH OF ACKS: {len(receivedAck)}")
-            print(f"\tSEGS, ACKS: {receivedAck[0].seqnum}, {receivedAck[0].acknum}")
+            # 3 iterations have passed and expected ack not received
+            elif self.currentSeqNum + 4 > receivedAck[0].acknum and self.wait >= 3:
+                self.countDroppedAckPackets += 1
+                self.currentSeqNum = receivedAck[0].acknum
+                self.wait = 0
+            else:
+                self.wait += 1
+                return
 
         # Divide data to send into maximum allowed per segment
         # TODO: Make more efficient
         segmentList = [self.dataToSend[i:i+self.DATA_LENGTH] for i in range(0, len(self.dataToSend), self.DATA_LENGTH)]
 
         # Pipeline segments to fit the flow-control window - RDTLayer.FLOW_CONTROL_WIN_SIZE until all data sent.
-        # 3 Segments can be sent in 1 window as 1 (SEQ) + 4 (Payload)
+        # 3 Segments can be sent in 1 window as 15// 4 (Payload)
         seqnum = self.currentSeqNum
-        windowStart = seqnum
+        self.windowStart = seqnum // 4
         segSize = int(self.FLOW_CONTROL_WIN_SIZE//self.DATA_LENGTH)     # Round down to fit all data in window size
-        windowStop = seqnum + segSize
+        self.windowStop = self.windowStart + segSize
 
-        if seqnum < len(segmentList):                          # TODO: may have to add check if last window not received
-            for item in range(windowStart, windowStop):
+        if self.windowStart < len(segmentList):                          # TODO: may have to add check if last window not received
+            for index in range(self.windowStart, self.windowStop):
                 # Do we have data to send?
-                if seqnum < len(segmentList):
+                if index < len(segmentList):
                     # Set and display sending segment
                     segmentSend = Segment()
-                    data = segmentList[seqnum]
+                    data = segmentList[index]
+                    seqnum = index*4
                     segmentSend.setData(seqnum, data)
                     print("Sending segment: ", segmentSend.to_string())
 
                     # Use the unreliable sendChannel to send the segment
                     self.sendChannel.send(segmentSend)
-                    seqnum += 1
                     self.currentSeqNum = seqnum
 
 
@@ -249,7 +250,7 @@ class RDTLayer(object):
         # What segments have been received?
         # How will you get them back in order?
         # This is where a majority of your logic will be implemented
-        print('processReceive(): Complete this...')
+        #print('processReceive(): Complete this...')
 
         # This call returns a list of incoming segments (see Segment class)...
         listIncomingSegments = self.receiveChannel.receive()
@@ -265,7 +266,8 @@ class RDTLayer(object):
                 self.currentSeqNum = readableList[item][0]
 
             # Store new AckNum that represents only accepted data
-            self.currentAckNum += len(readableList)
+            self.currentAckNum += 4*len(readableList)
+
 
         # ############################################################################################################ #
         # How do you respond to what you have received?
@@ -278,7 +280,7 @@ class RDTLayer(object):
         # ############################################################################################################ #
         # Display response segment
         segmentAck.setAck(acknum)
-        print("Sending ack: ", segmentAck.to_string())
-
-        # Use the unreliable sendChannel to send the ack packet
-        self.sendChannel.send(segmentAck)
+        if len(self.dataToSend) == 0:
+            print("Sending ack: ", segmentAck.to_string())
+            # Use the unreliable sendChannel to send the ack packet
+            self.sendChannel.send(segmentAck)
