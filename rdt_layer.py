@@ -145,7 +145,7 @@ class RDTLayer(object):
         # # CHECKS FOR SEQNUM AND ACKNUM
         # #   Does seq match ack? If not go-back-n immediately
         for num in range(0, len(readableList)):
-            if readableList[num][0] - num != self.currentAckNum:
+            if readableList[num][0] - (num*4) != self.currentAckNum:
                 readableList = readableList[:num]              # remove 'n' remaining from list
                 break
 

@@ -54,10 +54,10 @@ server = RDTLayer()
 
 # Start with a reliable channel (all flags false)
 # As you create your rdt algorithm for send and receive, turn these on.
-outOfOrder = True
-dropPackets = True
-delayPackets = True
-dataErrors = True
+outOfOrder = False
+dropPackets = False
+delayPackets = False
+dataErrors = False
 
 # Create unreliable communication channels
 clientToServerChannel = UnreliableChannel(outOfOrder,dropPackets,delayPackets,dataErrors)
