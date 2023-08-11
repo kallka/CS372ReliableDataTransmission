@@ -163,11 +163,6 @@ class RDTLayer(object):
     #                                                                                                                  #
     # ################################################################################################################ #
     def processData(self):
-        # print(f"\tLine 130: Data in rdt_layer.processData: {self.dataToSend}")
-        # print(f"\tLine 134: Length in rdt_layer.processData: {len(self.dataToSend)}")
-        # print(f"\tLine 135: Data in rdt_layer.processData: {self.getDataReceived}")
-        #print(f"\tCurrentAckNum: {self.currentAckNum}")
-        #print(f"\tCurrentSeqNum: {self.currentSeqNum}")
         self.currentIteration += 1
         self.processSend()
         self.processReceiveAndSendRespond()

@@ -2,7 +2,11 @@
 # Course: OSU CS 372
 # Due Date: 8/15/23
 # Citations:    1.) OSU Course Materials
-#               2.) https://www.geeksforgeeks.org/python-divide-string-into-equal-k-chunks/
+#               2.) Help with list comp: https://www.geeksforgeeks.org/python-divide-string-into-equal-k-chunks/
+#               3.) Go-Back-N Protocol: https://www.youtube.com/watch?v=QD3oCelHJ20
+#               4.) Videos from Kurose: Principles of Reliable Data Transfer:
+#                       1 - https://www.youtube.com/watch?v=nyUHUtmxWg0&t=1160s
+#                       2 - https://www.youtube.com/watch?v=vxgH6r-II2Q
 
 
 from rdt_layer import *
@@ -81,13 +85,6 @@ while True:
     print("Server------------------------------------------")
     server.processData()
     serverToClientChannel.processData()
-    # print(f"\t TOTAL OUT OF ORDER: {server.outOfOrderPackets}")
-    # print(f"\t TOTAL CHECKSUM: {server.countChecksumErrorPackets}")
-    # print(f"\t TOTAL DROPPED ACKS: {client.countDroppedAckPackets}")
-    # clientToServerChannel.countOutOfOrderPackets = server.outOfOrderPackets
-    # clientToServerChannel.countChecksumErrorPackets = server.countChecksumErrorPackets
-    # serverToClientChannel.countDroppedPackets = client.countDroppedAckPackets
-
 
     # show the data received so far
     print("Main--------------------------------------------")
