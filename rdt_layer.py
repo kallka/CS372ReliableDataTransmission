@@ -239,14 +239,18 @@ class RDTLayer(object):
     def processReceiveAndSendRespond(self):
         segmentAck = Segment()                                  # Segment acknowledging packet(s) received
 
-        # ############################################################################################################ #
-        # What segments have been received?
-        # How will you get them back in order?
-        # This is where a majority of your logic will be implemented
-
         # This call returns a list of incoming segments (see Segment class)...
         listIncomingSegments = self.receiveChannel.receive()
         readableList = []                                           # Will hold seq num and data
+
+        # CHECK WAIT TIME TO AVOID SENDING TOO MANY ACKS
+        if len(listIncomingSegments) == 0:
+            if self.wait == 3:
+                self.wait = 0
+                self.countSegmentTimeouts += 1
+            else:
+                self.wait += 1
+                return
 
         if len(listIncomingSegments) > 0:
             # Extract and order items from segment
