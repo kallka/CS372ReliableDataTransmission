@@ -95,10 +95,14 @@ while True:
         print('$$$$$$$$ ALL DATA RECEIVED $$$$$$$$')
         break
 
-    # time.sleep(0.1)
-    # input("Press enter to continue...")
 
-
+# #################################################################################################################### #
+# PRINT TO CONSOLE                                                                                                     #
+#                                                                                                                      #
+#                                                                                                                      #
+#                                                                                                                      #
+#                                                                                                                      #
+# #################################################################################################################### #
 print("countTotalDataPackets: {0}".format(clientToServerChannel.countTotalDataPackets))
 print("countSentPackets: {0}".format(clientToServerChannel.countSentPackets + serverToClientChannel.countSentPackets))
 print("countChecksumErrorPackets: {0}".format(clientToServerChannel.countChecksumErrorPackets))
